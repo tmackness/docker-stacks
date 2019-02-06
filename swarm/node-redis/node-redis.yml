@@ -1,0 +1,59 @@
+version: "3.7"
+
+services:
+
+  redis:
+    image: redis:alpine
+    command: redis-server --requirepass yourpassword # overrides image CMD with this in order to set a password
+    networks:
+      - backend
+    stop_grace_period: 1m30s
+    deploy:
+      replicas: 1
+      update_config:
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    stop_grace_period: 30s
+
+  node:
+    image: registry.gitlab.com/my-image
+    environment:
+      NODE_ENV: production
+      REDIS_HOST: redis
+      REDIS_PASS: yourpassword
+      DOCKER_HOST: ${DOCKER_HOST}   # Env set prior to deploying this stack (For consul to connect to host machine via docker0 bridge IP) "export DOCKER_HOST=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')"
+    networks:
+      - backend
+      - proxy
+    deploy:
+      replicas: 3
+      labels:
+        - traefik.enable=true
+        - traefik.port=1000
+        - traefik.backend=node
+        - traefik.frontend.rule=Host:domain.com
+        - traefik.passHostHeader=true
+      update_config:
+        delay: 10s
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    stop_grace_period: 30s
+    depends_on:
+      - redis
+
+networks:
+  backend:
+  proxy:
+    external: true
