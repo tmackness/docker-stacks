@@ -1,0 +1,66 @@
+#
+# Resources
+# Traefik - https://dockerswarm.rocks/traefik/
+#
+version: "3.7"
+
+x-default-opts: &default-opts
+  logging:
+    options:
+      max-size: "1m"
+
+services:
+  traefik:
+    <<: *default-opts
+    image: traefik:1.7-alpine
+      - proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # So that Traefik can listen to the Docker events - read only
+      - acme:/etc/traefik/acme
+    deploy:
+      replicas: 3
+      labels:
+        - traefik.enable=true
+        - traefik.port=8080
+        - traefik.backend=traefik
+        - traefik.frontend.rule=Host:traefik.spamme.ga
+        #- traefik.frontend.auth.basic=user:$$2y$$05$$9.VkJCOtlR5A8/HOgGUNVedOvM.pzor1lm/17ScxspkDfu9062DXW # Generate by: echo $(htpasswd -nbB user pass) | sed -e s/\\$/\\$\\$/g
+      update_config:
+        delay: 10s
+        parallelism: 2
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      placement:
+        constraints:
+          - node.role == manager # Required to run on manager nodes when in swarm in order to access docker socket
+    stop_grace_period: 30s
+    command: # List of commands: https://docs.traefik.io/configuration/backends/docker/
+      - --api # Enable web UI
+      - --docker # Tells Traefik to listen to docker
+      - --docker.swarmMode # Enables swarm mode
+      - --docker.domain=traefik # Sets defaul domain name.
+      - --docker.network=proxy # Sets default network to "proxy" thus not requiring a "traefik.docker.network=proxy" label on each service
+      - --docker.watch # Watch for docker changes
+      - --docker.exposedByDefault=false # Requires "traefik.enable=true" label in order for traefik to work on each service.
+      - --defaultentrypoints=http,https # Accpet both http and https
+      - --logLevel=DEBUG # Traefik loglevel use high level in prod e.g. INFO
+      - --traefikLog.filePath=/traefik.log
+      - --traefikLog.format=json
+      - --accessLog.filePath=/access.log
+      - --accessLog.format=json
+
+volumes:
+  acme:
+
+networks:
+  proxy:
+    driver: overlay
+    name: proxy
