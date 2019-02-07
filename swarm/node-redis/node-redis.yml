@@ -27,7 +27,7 @@ services:
       NODE_ENV: production
       REDIS_HOST: redis
       REDIS_PASS: yourpassword
-      DOCKER_HOST: ${DOCKER_HOST}   # Env set prior to deploying this stack (For consul to connect to host machine via docker0 bridge IP) "export DOCKER_HOST=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')"
+      CONSUL_HOST: ${CONSUL_HOST}   # Env set prior to deploying this stack (For consul to connect to host machine via docker0 bridge IP) "export DOCKER_HOST=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')"
     networks:
       - backend
       - proxy

@@ -45,17 +45,17 @@ services:
       #   constraints:
       #     constraints: [node.role == worker] # if you have enough servers, make this only run on workers (if using Docker Socket Proxy), maybe in a public DMZ
     stop_grace_period: 30s
-    command:                                        # List of commands: https://docs.traefik.io/configuration/backends/docker/
-      - --api                                       # Enable web UI
-      - --docker                                    # Tells Traefik to listen to docker
-      - --docker.endPoint=http://dockersocket:2375  # use docker socket service to securely access docker socket
-      - --docker.swarmMode                          # Enables swarm mode
-      - --docker.domain=traefik                     # Sets defaul domain name.
-      - --docker.network=proxy                      # Sets default network to "proxy" thus not requiring a "traefik.docker.network=proxy" label on each service
-      - --docker.watch                              # Watch for docker changes
-      - --docker.exposedByDefault=false             # Requires "traefik.enable=true" label in order for traefik to work on each service.
-      - --defaultentrypoints=http,https             # Accpet both http and https
-      - --logLevel=DEBUG                            # Traefik loglevel use high level in prod e.g. INFO
+    command: # List of commands: https://docs.traefik.io/configuration/backends/docker/
+      - --api # Enable web UI
+      - --docker # Tells Traefik to listen to docker
+      - --docker.endPoint=http://dockersocket:2375 # use docker socket service to securely access docker socket
+      - --docker.swarmMode # Enables swarm mode
+      - --docker.domain=traefik # Sets defaul domain name.
+      - --docker.network=proxy # Sets default network to "proxy" thus not requiring a "traefik.docker.network=proxy" label on each service
+      - --docker.watch # Watch for docker changes
+      - --docker.exposedByDefault=false # Requires "traefik.enable=true" label in order for traefik to work on each service.
+      - --defaultentrypoints=http,https # Accpet both http and https
+      - --logLevel=DEBUG # Traefik loglevel use high level in prod e.g. INFO
       - --traefikLog.filePath=/traefik.log
       - --traefikLog.format=json
       - --accessLog.filePath=/access.log
@@ -87,6 +87,7 @@ networks:
   proxy:
     driver: overlay
     name: proxy
-  driver: overlay
+  traefik-docker:
+    driver: overlay
     driver_opts:
-      encrypted: 'true' # since we're passing docker socket stuff over TCP, lets IPSec
+      encrypted: "true" # since we're passing docker socket stuff over TCP, lets IPSec
