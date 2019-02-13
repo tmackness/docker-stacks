@@ -31,10 +31,13 @@ Then you can reference the network as `proxy`, however, without the `name: proxy
 
 ### 2. Traefik File Backend
 
+In order to use File backend along with Docker you will need to use Consul.
+
 From my understanding (and lack of success) you are unable to add `file` configurations as command parameters e.g. the follow **doesn't work**:
 
 ```yml
 command:
+  - - storeconfig
   - ...
   - --file
   - --file.backends.backend1.servers.server1.url=http://193.242.31.20:8500
